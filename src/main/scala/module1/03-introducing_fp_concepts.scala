@@ -237,7 +237,7 @@ object opt {
       case Option.Some(v) => f(v)
     }
 
-    def printIfAny[T]():  Unit = this match {
+    def printIfAny():  Unit = this match {
       case Option.Some(v) => println(v)
       case Option.None =>
     }
@@ -251,8 +251,8 @@ object opt {
     }
 
     def filter(f: T => Boolean):  Option[T] = this match {
-      case Option.Some(v) => if(f(v)) Option.Some(v) else Option.None
-      case Option.None => Option.None
+      case Option.Some(v) if(f(v)) => Option.Some(v)
+      case _ => Option.None
     }
 
   }
@@ -308,11 +308,12 @@ object list {
     }
 
     def mkString(sep: String): String = {
-      def iter(t: List[T]): String = (t) match {
-        case List.::(head, tail) => head + sep + iter(tail)
-        case List.Nil => ""
+      @tailrec
+      def iter(mk: String, t: List[T]): String = (t) match {
+        case List.::(head, tail) => iter(mk + head + sep, tail)
+        case List.Nil => mk
       }
-      iter(this)
+      iter("", this)
     }
 
     def apply[T](v: T*): List[T] = if(v.isEmpty) List.Nil
