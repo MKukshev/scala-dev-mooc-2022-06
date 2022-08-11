@@ -29,7 +29,10 @@ object higher_kinded_types{
     override def flatMap[B](f: A => Option[B]): Option[B] = opt.flatMap(f)
   }
 
-  def listBindable[A](opt: List[A]): Bindable[List, A] = ???
+  def listBindable[A](opt: List[A]): Bindable[List, A] = new Bindable[List, A] {
+    override def map[B](f: A => B): List[B] = opt.map(f)
+    override def flatMap[B](f: A => List[B]): List[B] = opt.flatMap(f)
+  }
 
   val optA: Option[Int] = Some(1)
   val optB: Option[Int] = Some(2)
