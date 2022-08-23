@@ -245,7 +245,7 @@ object zioOperators {
   lazy val r3 = for {
     a <- lineToInt
     b <- lineToInt
-    r <- ZIO.succeed(a+b)
+    r <- ZIO.effectTotal(a+b)
     _ <- writeLine(s"$r")
   } yield (a + b)
 
@@ -266,12 +266,14 @@ object zioOperators {
    */
   lazy val ab2: ZIO[Any, Throwable, Int] = for {
     a <- a
+    b <- b
   } yield a
 
   /**
    * последовательная комбинация эффектов a и b
    */
   lazy val ab3: ZIO[Any, Throwable, String] = for {
+    a <- a
     b <- b
   } yield b
 
@@ -288,11 +290,7 @@ object zioOperators {
    * Другой эффект в случае ошибки
    */
 
-  val ab5 = try{
-    ab3
-  } catch {
-    case e: Throwable => ZIO.fail(e)
-  }
+  val ab5 = ab3.refineToOrDie[IOException]
 
   /**
     * 
@@ -317,6 +315,6 @@ object zioOperators {
 
   // из эффекта с ошибкой, в эффект который не падает
 
-  val d: UIO[ZIO[Any, IOException, String]] = ZIO.effectTotal(readFile("fileName"))
+  val d: URIO[Any, Any] = readFile("fileName").orElseSucceed()
   
 }
