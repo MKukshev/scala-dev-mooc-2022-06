@@ -69,7 +69,7 @@ object type_classes {
 
     // 2 имплисит занчения / функции (инстансы тайп класса)
 
-    implicit val intOrdering = Ordering.from[Int]((a, b) => a < b)
+    implicit val intOrdering: Ordering[Int] = Ordering.from[Int]((a, b) => a < b)
 
     implicit val strOrdering = Ordering.from[String]((a, b) => a < b)
   }
@@ -110,20 +110,20 @@ object type_classes {
   val result = List("a", "b", "c").filter(str => str === "a")
 
 
-//  def tuplef[F[_]: Bindable, A, B](fa: F[A], fb: F[B]): F[(A, B)] = {
-//    Bindable[F](fa).flatMap(v1 =>
-//      Bindable[F](fb).map(v2 => (v1, v2))
-//    )
-//  }
-//
-//  // 1
-//  trait Bindable[F[_]] {
-//    def map[A, B](fa: F[A])(f: A => B): F[B]
-//    def flatMap[A, B](fb: F[A])(f: A => F[B]): F[B]
-//  }
-//
-//  object Bindable{
-//    def apply[F[_], A](implicit ev: Bindable[F[A]]): Bindable[F[A]] = ev
-//  }
+/*  def tuplef[F[_]: Bindable, A, B](fa: F[A], fb: F[B]): F[(A, B)] = {
+    Bindable[F[_]](fa).flatMap(v1 =>
+      Bindable[F[_]](fb).map(v2 => (v1, v2))
+    )
+  }
 
+  // 1
+  trait Bindable[F[_]] {
+    def map[A, B](fa: F[A])(f: A => B): F[B]
+    def flatMap[A, B](fb: F[A])(f: A => F[B]): F[B]
+  }
+
+  object Bindable{
+    def apply[F[_], A](implicit ev: Bindable[F[_]]): Bindable[F[_]] = ev
+  }
+*/
 }

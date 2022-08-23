@@ -267,19 +267,6 @@ object promise{
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
   object FutureSyntax {
 
     implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
@@ -293,7 +280,14 @@ object promise{
       p.future
     }
 
-    def flatMap[T, B](future: Future[T])(f: T => Future[B]): Future[B] = ???
+    def flatMap[T, B](future: Future[T])(f: T => Future[B]): Future[B] = {
+      val p = Promise[B]
+      future.onComplete {
+        case Failure(exception) => p.failure(exception)
+        case Success(value) => p.success(f(value).value.get.get)
+      }
+      p.future
+    }
 
 
     def make[T](v: => T)(implicit ec: ExecutionContext): Future[T] = {

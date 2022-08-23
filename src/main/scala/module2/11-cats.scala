@@ -235,7 +235,7 @@ object cats_type_classes{
       acc.updated(k, optCombine(v, acc.get(k)))
     }
 
-  def combineAll[A: Monoid](l: List[A]): A =
+  def _combineAll[A: Monoid](l: List[A]): A =
     l.foldLeft(Monoid[A].empty)(Monoid[A].combine(_, _))
 
 
