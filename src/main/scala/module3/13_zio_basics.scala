@@ -3,11 +3,12 @@ package module3
 import zio.clock.{Clock, nanoTime}
 import zio.console.{Console, getStrLn}
 
-import java.io.IOException
+import java.io.{File, IOException}
 import scala.concurrent.Future
-import scala.io.StdIn
+import scala.io.{BufferedSource, Source, StdIn}
 import scala.util.Try
 import zio.duration._
+
 import scala.language.postfixOps
 import zio.Task
 import zio.IO
@@ -265,16 +266,14 @@ object zioOperators {
    */
   lazy val ab2: ZIO[Any, Throwable, Int] = for {
     a <- a
-    b <- b
   } yield a
 
   /**
    * последовательная комбинация эффектов a и b
    */
   lazy val ab3: ZIO[Any, Throwable, String] = for {
-    a <- a
     b <- b
-  } yield (b)
+  } yield b
 
 
   /**
@@ -301,13 +300,23 @@ object zioOperators {
     */
 
 
-    trait UserValidationError
+  trait UserValidationError
 
 
-  def readFile(fileName: String): ZIO[Any, IOException, String] = ???
+  def readFile(fileName: String): ZIO[Any, IOException, String] =  {
+    val source: ZIO[Any, IOException, Source] = ZIO.fromFunction(Any => Source.fromFile(new File(fileName)))
+
+    def lines(s: Source): ZIO[Any, IOException, String] =  ZIO.fromFunction(Any =>s.getLines().toList.foldLeft("")( _ + _))
+
+    val r: ZIO[Any, IOException, String] = for{
+      s <- source
+      l <- lines(s)
+    } yield l
+    r
+  }
 
   // из эффекта с ошибкой, в эффект который не падает
 
-  val d = ZIO.effectTotal(ab5)
+  val d: UIO[ZIO[Any, IOException, String]] = ZIO.effectTotal(readFile("fileName"))
   
 }
