@@ -5,9 +5,11 @@ import zio.{ExitCode, URIO}
 object App {
   def main(args: Array[String]): Unit = {
 
-    zio.Runtime.default.unsafeRun(zioConstructors.z12)
+    zio.Runtime.default.unsafeRun(zioOperators.r3)
 
-    // toyModel.echo.run()
+//    zio.Runtime.default.unsafeRun(zioConstructors.z12)
+
+//     toyModel.echo.run()
   }
 }
 

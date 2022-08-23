@@ -4,7 +4,8 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 import java.util.concurrent.atomic.AtomicInteger
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, Future, Promise}
+import scala.util.{Failure, Success}
 
 class futures_sequence_test extends AnyFlatSpec {
 
@@ -44,6 +45,17 @@ class futures_sequence_test extends AnyFlatSpec {
     val fut1 = fut(1)
     val fut2 = fut(2)
     val fut3 = fut(3)
+
+    val test = List(fut1, fut2, fut3)
+    val full: List[Future[Int]] = test.map(a => {
+      val p = Promise[Int]
+      a.onComplete {
+        case Failure(exception) => p.failure(exception)
+        case Success(value) => p.success(value)
+      }
+      p.future
+    }
+    )
 
     assert(await(futures.task_futures_sequence.fullSequence[Int](List(fut1, fut2, fut3))) === (List(1, 2, 3), List()))
   }

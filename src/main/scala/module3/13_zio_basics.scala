@@ -166,37 +166,45 @@ object zioOperators {
    * 1. Создать ZIO эффект который будет читать строку из консоли
    */
 
-  lazy val readLine = ???
+  lazy val readLine = ZIO.effect(StdIn.readLine())
 
   /** *
    *
    * 2. Создать ZIO эффект который будет писать строку в консоль
    */
 
-  def writeLine(str: String) = ???
+  def writeLine(str: String) = ZIO.effect(println(str))
 
   /** *
    * 3. Создать ZIO эффект котрый будет трансформировать эффект содержащий строку в эффект содержащий Int
    */
 
-  lazy val lineToInt = ???
+  lazy val lineToInt = readLine.flatMap(s => ZIO.effect(s.toInt))
   /** *
    * 3.Создать ZIO эффект, который будет работать как echo для консоли
    *
    */
 
-  lazy val echo = ???
+  lazy val echo = for {
+    s <- readLine
+    _ <- writeLine(s)
+  } yield ()
 
   /**
    * Создать ZIO эффект, который будет привествовать пользователя и говорить, что он работает как echo
    */
 
-  lazy val greetAndEcho = ???
+  lazy val greetAndEcho = for {
+    _ <- writeLine("Как тебя зовут?")
+    name <- readLine
+    _ <- writeLine(s"Привет, $name. Я работаю как echo!")
+    - <- echo
+  } yield ()
 
   // Другие варианты композиции
 
-  lazy val a1: Task[Unit] = ??? // println()
-  lazy val b1: Task[String] = ???
+  lazy val a1: Task[Unit] = writeLine("Hello!") // println()
+  lazy val b1: Task[String] = readLine
 
 
   lazy val z13: Task[(Unit, String)] = a1 zip b1
@@ -215,38 +223,58 @@ object zioOperators {
    * строки из консоли, преобразовывать их в числа, а затем складывать их
    */
 
-  val r1 = ???
+  val r1 = for {
+    a <- lineToInt
+    b <- lineToInt
+  } yield (a + b)
 
   /**
    * Второй вариант
    */
 
-  val r2: ZIO[Any, Throwable, Int] = ???
+  val r2: ZIO[Any, Throwable, Int] = for {
+    a <- lineToInt
+    b <- lineToInt
+  } yield (a + b)
 
   /**
    * Доработать написанную программу, чтобы она еще печатала результат вычисления в консоль
    */
 
-  lazy val r3 = ???
+  lazy val r3 = for {
+    a <- lineToInt
+    b <- lineToInt
+    r <- ZIO.succeed(a+b)
+    _ <- writeLine(s"$r")
+  } yield (a + b)
 
 
-  lazy val a: Task[Int] = ???
-  lazy val b: Task[String] = ???
-
-  /**
-   * последовательная комбинация эффектов a и b
-   */
-  lazy val ab1: ZIO[Any, Throwable, (Int, String)] = ???
-
-  /**
-   * последовательная комбинация эффектов a и b
-   */
-  lazy val ab2: ZIO[Any, Throwable, Int] = ??? 
+  lazy val a: Task[Int] = lineToInt // println()
+  lazy val b: Task[String] = readLine
 
   /**
    * последовательная комбинация эффектов a и b
    */
-  lazy val ab3: ZIO[Any, Throwable, String] = ??? 
+  lazy val ab1: ZIO[Any, Throwable, (Int, String)] = for {
+    a <- a
+    b <- b
+  } yield (a, b)
+
+  /**
+   * последовательная комбинация эффектов a и b
+   */
+  lazy val ab2: ZIO[Any, Throwable, Int] = for {
+    a <- a
+    b <- b
+  } yield a
+
+  /**
+   * последовательная комбинация эффектов a и b
+   */
+  lazy val ab3: ZIO[Any, Throwable, String] = for {
+    a <- a
+    b <- b
+  } yield (b)
 
 
   /**
@@ -257,11 +285,15 @@ object zioOperators {
 
 
   /**
-    * 
-    * Другой эффект в случае ошибки
-    */
+   *
+   * Другой эффект в случае ошибки
+   */
 
-    val ab5 = ???
+  val ab5 = try{
+    ab3
+  } catch {
+    case e: Throwable => ZIO.fail(e)
+  }
 
   /**
     * 
@@ -276,6 +308,6 @@ object zioOperators {
 
   // из эффекта с ошибкой, в эффект который не падает
 
-  val d = ???
+  val d = ZIO.effectTotal(ab5)
   
 }
