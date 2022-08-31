@@ -256,26 +256,17 @@ object zioOperators {
   /**
    * последовательная комбинация эффектов a и b
    */
-  lazy val ab1: ZIO[Any, Throwable, (Int, String)] = for {
-    a <- a
-    b <- b
-  } yield (a, b)
+  lazy val ab1: ZIO[Any, Throwable, (Int, String)] = a zip b
 
   /**
    * последовательная комбинация эффектов a и b
    */
-  lazy val ab2: ZIO[Any, Throwable, Int] = for {
-    a <- a
-    b <- b
-  } yield a
+  lazy val ab2: ZIO[Any, Throwable, Int] = a zipLeft b
 
   /**
    * последовательная комбинация эффектов a и b
    */
-  lazy val ab3: ZIO[Any, Throwable, String] = for {
-    a <- a
-    b <- b
-  } yield b
+  lazy val ab3: ZIO[Any, Throwable, String] = a zipRight b
 
 
   /**
