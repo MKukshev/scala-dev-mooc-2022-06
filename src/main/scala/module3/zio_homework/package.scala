@@ -1,6 +1,6 @@
 package module3
 
-import zio.{Has, Task, ULayer, ZIO, ZLayer}
+import zio.{Has, Schedule, Task, ULayer, URIO, ZIO, ZLayer}
 import zio.clock.{Clock, sleep}
 import zio.console._
 import zio.duration.durationInt
@@ -20,15 +20,44 @@ package object zio_homework {
    */
 
 
+  //def writeLine(str: String) = putStrLn(str)
 
-  lazy val guessProgram = ???
+  lazy val lineToInt = getStrLn.flatMap(s => ZIO.effect(s.toInt))
+
+  lazy val lineToIntOrRetry: ZIO[Console, Nothing, Int] = lineToInt.orElse(
+    putStrLn("Не корректный ввод, попробуй еще") *> lineToIntOrRetry)
+
+  lazy val random = nextIntBetween(1, 3)
+
+  lazy val startGuess = putStrLn("Угадайте число от 1 до 3") *> random
+
+  def check(a: Int, b: Int) =
+    if(a == b) putStrLn("Вы угадали!")
+    else  putStrLn("Вы не угадали")
+
+  lazy val guessProgram: ZIO[Console with Random, Throwable, Unit] = for{
+    rnd <- startGuess
+    i <- lineToIntOrRetry
+    _ <- check(i, rnd)
+  } yield ()
+
+  lazy val guessProgram2: ZIO[Console with Random, Throwable, Boolean] = for{
+    rnd <- startGuess
+    i <- lineToIntOrRetry
+    _ <- check(i, rnd)
+  } yield (rnd == i)
 
   /**
    * 2. реализовать функцию doWhile (общего назначения), которая будет выполнять эффект до тех пор, пока его значение в условии не даст true
    * 
    */
 
-  def doWhile = ???
+  val schedule = Schedule.recurWhile[Boolean](_ != true)
+
+
+  def doWhile[R,E](ef:ZIO[R, E, Boolean]) = ef.repeat(schedule)
+
+
 
   /**
    * 3. Реализовать метод, который безопасно прочитает конфиг из файла, а в случае ошибки вернет дефолтный конфиг
@@ -36,7 +65,7 @@ package object zio_homework {
    * Используйте эффект "load" из пакета config
    */
 
-  def loadConfigOrDefault = ???
+  def loadConfigOrDefault =   openFile("primary.data").orElse(openFile("backup.data"))
 
 
   /**

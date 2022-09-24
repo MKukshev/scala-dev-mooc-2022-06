@@ -40,7 +40,7 @@ object zioDS {
       * и повторяться пока число не будет равным 0
       */
 
-    val schedule3 = Schedule.recurWhile[Int](_ > 0)
+    val schedule3= Schedule.recurWhile[Int](_ > 0)
 
     val random = nextIntBetween(0, 11)
 
