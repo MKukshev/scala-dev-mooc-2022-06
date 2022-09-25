@@ -22,7 +22,12 @@ package object userDAO {
          def findBy(id: UserID): Task[Option[User]]
        }
 
-       val live: ULayer[UserDAO] = ???
-     }
+       val live: ULayer[UserDAO] = ZLayer.succeed(
+         new Service {
+           override def list(): Task[List[User]] = ???
 
+           override def findBy(id: UserID): Task[Option[User]] = ???
+         }
+       )
+     }
 }

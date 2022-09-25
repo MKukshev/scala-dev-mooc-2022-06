@@ -32,5 +32,4 @@ package object emailService {
         def sendMail(email: Email): URIO[EmailService with zio.console.Console, Unit] =
             ZIO.accessM(_.get.sendMail(email))
     }
-
 }
