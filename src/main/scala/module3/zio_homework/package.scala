@@ -1,17 +1,14 @@
 package module3
 
 import module3.zioConcurrency.printEffectRunningTime
-import module3.zio_homework.EffectRunTimeService
-import zio.{Has, IO, Ref, Schedule, Task, UIO, ULayer, URIO, ZIO, ZLayer, clock}
+import zio.{Has, IO, Ref, Schedule, Task, UIO, ULayer, URIO, ZIO, ZLayer, clock, console}
 import zio.clock.{Clock, sleep}
-import zio.console._
+import zio.console.{Console, getStrLn, putStrLn}
 import zio.duration.durationInt
 import zio.macros.accessible
 import zio.random._
 
-import java.io.IOException
 import java.util.concurrent.TimeUnit
-import scala.io.StdIn
 import scala.language.postfixOps
 import module3.zio_homework.config._
 
@@ -132,25 +129,26 @@ package object zio_homework {
 
   type EffectRunTimeService = Has[EffectRunTimeService.Service]
   
-//  @accessible
+ // @accessible
   object EffectRunTimeService{
 
     trait Service{
       def printRunTime[R, E, A](eff: ZIO[R, E, A]): ZIO[Console with Clock with R, E, A]
     }
 
-    val live = ZLayer.succeed(
-      new Service {
-        override def printRunTime[R, E, A](eff: ZIO[R, E, A]): ZIO[Console with Clock with R, E, A] = for{
-          start <-  zio.clock.currentTime(TimeUnit.SECONDS)
-          r <- eff
-          end <- zio.clock.currentTime(TimeUnit.SECONDS)
-          _ <- zio.console.putStrLn(s"Running time ${end - start}")
-        } yield r
-      }
-    )
+    class ServiceImpl() extends Service {
+      override def printRunTime[R, E, A](eff: ZIO[R, E, A]): ZIO[Console with Clock with R, E, A] = for{
+        start <-  zio.clock.currentTime(TimeUnit.SECONDS)
+        r <- eff
+        end <- zio.clock.currentTime(TimeUnit.SECONDS)
+        _ <- zio.console.putStrLn(s"Running time ${end - start}")
+      } yield r
+    }
+
+    val live = ZLayer.succeed( new ServiceImpl())
+
     def printRunTime[R, E, A](eff: ZIO[R, E, A]): ZIO[Console with Clock with R, E, A] =
-      ZIO.accessM(_.get.printRunTime(eff))
+        ZIO.accessM(_.get.printRunTime(eff))
   }
 
 
