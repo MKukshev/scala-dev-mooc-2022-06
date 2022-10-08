@@ -1,8 +1,10 @@
 package module3.cats_effect_homework
 
-import cats.effect.Sync
+import cats.effect.{IO, Sync}
 import cats.implicits._
-import Wallet._
+import Wallet.{WalletId, _}
+
+import java.nio.file.{Files, Paths}
 
 // DSL управления электронным кошельком
 trait Wallet[F[_]] {
@@ -25,7 +27,13 @@ trait Wallet[F[_]] {
 // - java.nio.file.Files.exists
 // - java.nio.file.Paths.get
 final class FileWallet[F[_]: Sync](id: WalletId) extends Wallet[F] {
-  def balance: F[BigDecimal] = ???
+
+
+  def balance: F[BigDecimal] = for{
+    strB <- Sync[F].delay(Files.readString(Paths.get(id)))
+    res <- Sync[F].delay(BigDecimal(strB))
+  }yield(res)
+
   def topup(amount: BigDecimal): F[Unit] = ???
   def withdraw(amount: BigDecimal): F[Either[WalletError, Unit]] = ???
 }
@@ -37,7 +45,18 @@ object Wallet {
   // Здесь нужно использовать обобщенную версию уже пройденного вами метода IO.delay,
   // вызывается она так: Sync[F].delay(...)
   // Тайпкласс Sync из cats-effect описывает возможность заворачивания сайд-эффектов
-  def fileWallet[F[_]: Sync](id: WalletId): F[Wallet[F]] = ???
+//  def fileWallet[F[_]: Sync](id: WalletId): F[Wallet[F]] = Sync[F].delay(IO.delay(Files.exists(Paths.get(id))))
+  def fileWallet[F[_]: Sync](id: WalletId): F[Wallet[F]] = Files.exists(Paths.get(id)) match {
+    case true => for{
+        strB <- Sync[F].delay(Files.readString(Paths.get(id)))
+        res <- Sync[F].delay(BigDecimal(strB))
+      }yield(res)
+    case _ =>for{
+        _ <- Sync[F].delay(Files.write(Paths.get(id), "0".getBytes))
+        res <-Sync[F].delay(BigDecimal(0))
+      }yield(res)
+  }
+
 
   type WalletId = String
 
