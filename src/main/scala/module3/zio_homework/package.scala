@@ -169,8 +169,8 @@ package object zio_homework {
     * Подготовьте его к запуску и затем запустите воспользовавшись ZioHomeWorkApp
     */
 
-  val appEnv: ZLayer[Any, Nothing, EffectRunTimeService] = EffectRunTimeService.live
+  val appEnv = EffectRunTimeService.live
 
-  lazy val runApp = appWithTimeLogg.provideSomeLayer[Console with Clock with Random](appEnv)
+  lazy val runApp = appWithTimeLogg.provideSomeLayer[EffectRunTimeService with Console with Clock with Random](appEnv)
   
 }
