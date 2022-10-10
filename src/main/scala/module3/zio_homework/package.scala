@@ -147,7 +147,7 @@ package object zio_homework {
 
     val live = ZLayer.succeed( new ServiceImpl())
 
-    def printRunTime[R, E, A](eff: ZIO[R, E, A]): ZIO[Console with Clock with R, E, A] =
+    def printRunTime[R, E, A](eff: ZIO[R, E, A]): ZIO[EffectRunTimeService with Console with Clock with R, E, A] =
         ZIO.accessM(_.get.printRunTime(eff))
   }
 
