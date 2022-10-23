@@ -1,6 +1,6 @@
 package module3.cats_effect_homework
 
-import cats.effect.{IO, Sync}
+import cats.effect.{Sync}
 import cats.implicits._
 import Wallet.{WalletId, _}
 import cats.Monad
@@ -46,7 +46,7 @@ final class FileWallet[F[_]: Sync](id: WalletId) extends Wallet[F] {
     curr <- Sync[F].delay(BigDecimal(strB))
     res <- Sync[F].delay(
       if(curr >= amount) {
-        Files.write(Paths.get(id), (curr + amount).toString().getBytes)
+        Files.write(Paths.get(id), (curr - amount).toString().getBytes)
         Either.right()
       } else  Either.left(BalanceTooLow))
   }yield(res)
