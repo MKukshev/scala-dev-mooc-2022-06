@@ -29,9 +29,8 @@ object WalletFibersApp extends IOApp.Simple {
     IO.sleep(duration) *> wallet.topup(amount).flatMap(_ => periodicTopup(wallet,amount, duration))
 
   def printWalletBalance(list: NonEmptyList[Wallet[IO]], amount: BigDecimal, duration: FiniteDuration): IO[Unit] =
-    IO.sleep(duration) *> IO.pure(list.map(wallet =>
-      wallet.balance.map(balance =>
-        IO.println(s"Wallet: $balance"))))
+    IO.sleep(duration) *> list.traverse(_.balance.map(balance =>
+      IO.println(s"Wallet: $balance")))
       .flatMap(_ => printWalletBalance(list,amount, duration))
 
 
@@ -41,7 +40,6 @@ object WalletFibersApp extends IOApp.Simple {
     repeat(wallet,amount, duration).start
   }
 
-
   def printWalletBalanceF(wallet1:  IO[Wallet[IO]], wallet2:  IO[Wallet[IO]], wallet3:  IO[Wallet[IO]], amount: BigDecimal, duration: FiniteDuration) = {
     def repeat(wallet1:  IO[Wallet[IO]], wallet2:  IO[Wallet[IO]], wallet3:  IO[Wallet[IO]], amount: BigDecimal, duration: FiniteDuration): IO[Unit] =
       IO.sleep(duration) *> wallet1.flatMap(w => w.balance.flatMap(IO.println)) *> wallet2.flatMap(w => w.balance.flatMap(IO.println))*> wallet3.flatMap(w => w.balance.flatMap(IO.println))
@@ -49,11 +47,19 @@ object WalletFibersApp extends IOApp.Simple {
     repeat(wallet1, wallet2, wallet3, amount, duration).start
   }
 
+  def printWalletBalance2F(list: NonEmptyList[IO[Wallet[IO]]], amount: BigDecimal, duration: FiniteDuration): IO[FiberIO[Unit]] = {
+    def repeat(list: NonEmptyList[IO[Wallet[IO]]], amount: BigDecimal, duration: FiniteDuration): IO[Unit] =
+      IO.sleep(duration) *> list.traverse(_.flatMap(w => w.balance.flatMap(IO.println)))
+        .flatMap(_ => repeat(list, amount, duration))
+    repeat(list, amount, duration).start
+  }
+
+
   final case class Environment(
     wallet1: FiberIO[Unit],
     wallet2: FiberIO[Unit],
     wallet3: FiberIO[Unit],
-    balance: FiberIO[Unit]
+    balance: FiberIO[Unit],
   )
 
   object Environment {
@@ -72,7 +78,8 @@ object WalletFibersApp extends IOApp.Simple {
       val fiberWallet3 = Resource.make(periodicTopupF(wallet3, 100, 2000.millis))(w =>
         w.cancel *> IO.println(s"Destroying fiberWallet3")
       )
-      val fiberBalance = Resource.make(printWalletBalanceF(wallet1, wallet2, wallet3, 100, 1000.millis))(w =>
+//      val fiberBalance = Resource.make(printWalletBalanceF(wallet1, wallet2, wallet3, 100, 1000.millis))(w =>
+      val fiberBalance = Resource.make(printWalletBalance2F(NonEmptyList.of(wallet1,wallet2,wallet3), 100, 1000.millis))(w =>
         w.cancel *> IO.println(s"Destroying fiberBalance")
       )
       for {

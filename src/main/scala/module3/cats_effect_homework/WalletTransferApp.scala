@@ -30,32 +30,31 @@ object WalletTransferApp extends IOApp.Simple {
     def balance: F[BigDecimal] = ref.get
     def topup(amount: BigDecimal): F[Unit] = ref.update(_ + amount)
     def withdraw(amount: BigDecimal): F[Either[WalletError, Unit]] = for{
-      curr <- ref.get
-      res <- if(curr >= amount) {
-          ref.update(_ - amount).as(Either.right())
-        } else  Sync[F].delay(Either.left(BalanceTooLow))
+      mod <- ref.modify(i => (i-amount, i-amount))
+      res <- if(mod > 0) Sync[F].delay(Either.right())
+          else Sync[F].delay(Either.left(BalanceTooLow))
     }yield(res)
   }
 
   // todo: реализовать конструктор. Снова хитрая сигнатура, потому что создание Ref - это побочный эффект
-  def wallet[Sync](balance: BigDecimal): IO[Wallet[IO]] = for {
-    ref <- Ref.of[IO, BigDecimal](balance)
-    wallet <- Sync[IO].delay(new InMemWallet(ref))
-  }yield(wallet)
+  def wallet[Sync](balance: BigDecimal): IO[Wallet[IO]] =
+    Ref.of[IO, BigDecimal](balance).map(ref => new InMemWallet(ref))
+
 
   // а это тест, который выполняет перевод с одного кошелька на другой и выводит балансы после операции. Тоже менять не нужно
-  def testTransfer: IO[(BigDecimal, BigDecimal)] =
+  def testTransfer: IO[(BigDecimal, BigDecimal)] = {
+
     for {
-      w1 <- wallet(100)
+      w1 <- wallet(10)
       w2 <- wallet(200)
       _ <- transfer(w1, w2, 50)
       b1 <- w1.balance
       b2 <- w2.balance
     } yield (b1, b2)
-
+  }
   def run: IO[Unit] = {
     // 50, 250
-    testTransfer.flatMap { case (b1, b2) => IO.println(s"$b1,$b2") }
+    testTransfer.flatMap { case (b1, b2) => IO.println(s"$b1,$b2")}
   }
 
 }

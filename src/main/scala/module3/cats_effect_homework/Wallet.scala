@@ -42,8 +42,7 @@ final class FileWallet[F[_]: Sync](id: WalletId) extends Wallet[F] {
   }yield()
 
   def withdraw(amount: BigDecimal): F[Either[WalletError, Unit]] = for{
-    strB <- Sync[F].delay(Files.readString(Paths.get(id)))
-    curr <- Sync[F].delay(BigDecimal(strB))
+    curr <- balance
     res <- Sync[F].delay(
       if(curr >= amount) {
         Files.write(Paths.get(id), (curr - amount).toString().getBytes)
