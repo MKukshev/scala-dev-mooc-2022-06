@@ -30,10 +30,8 @@ object WalletTransferApp extends IOApp.Simple {
     def balance: F[BigDecimal] = ref.get
     def topup(amount: BigDecimal): F[Unit] = ref.update(_ + amount)
     def withdraw(amount: BigDecimal): F[Either[WalletError, Unit]] = for{
-      mod <- ref.modify(i => (i-amount, i-amount))
-      res <- if(mod > 0) Sync[F].delay(Either.right())
-          else Sync[F].delay(Either.left(BalanceTooLow))
-    }yield(res)
+      mod <- ref.modify(i => (i-amount, Either.left(BalanceTooLow)))
+    }yield(mod)
   }
 
   // todo: реализовать конструктор. Снова хитрая сигнатура, потому что создание Ref - это побочный эффект
@@ -45,7 +43,7 @@ object WalletTransferApp extends IOApp.Simple {
   def testTransfer: IO[(BigDecimal, BigDecimal)] = {
 
     for {
-      w1 <- wallet(10)
+      w1 <- wallet(100)
       w2 <- wallet(200)
       _ <- transfer(w1, w2, 50)
       b1 <- w1.balance
