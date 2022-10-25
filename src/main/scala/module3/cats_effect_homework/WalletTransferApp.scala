@@ -30,7 +30,7 @@ object WalletTransferApp extends IOApp.Simple {
     def balance: F[BigDecimal] = ref.get
     def topup(amount: BigDecimal): F[Unit] = ref.update(_ + amount)
     def withdraw(amount: BigDecimal): F[Either[WalletError, Unit]] = for{
-      mod <- ref.modify(i => if(amount > i) (i, Either.left(BalanceTooLow))
+      mod <- ref.modify(i => if(amount > i) (i-amount, Either.left(BalanceTooLow))
       else (i - amount, Either.right()))
     }yield(mod)
   }
