@@ -12,6 +12,7 @@ object WalletMain extends IOApp.Simple {
       _ <- wallet.balance.flatMap(IO.println)
       _ <- wallet.withdraw(50.0)
       _ <- wallet.balance.flatMap(IO.println)
+
     } yield ()
 
 }

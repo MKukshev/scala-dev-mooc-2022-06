@@ -1,8 +1,11 @@
 package module3.cats_effect_homework
 
-import cats.effect.Sync
+import cats.effect.{Sync}
 import cats.implicits._
-import Wallet._
+import Wallet.{WalletId, _}
+import cats.Monad
+
+import java.nio.file.{Files, Paths}
 
 // DSL управления электронным кошельком
 trait Wallet[F[_]] {
@@ -25,9 +28,28 @@ trait Wallet[F[_]] {
 // - java.nio.file.Files.exists
 // - java.nio.file.Paths.get
 final class FileWallet[F[_]: Sync](id: WalletId) extends Wallet[F] {
-  def balance: F[BigDecimal] = ???
-  def topup(amount: BigDecimal): F[Unit] = ???
-  def withdraw(amount: BigDecimal): F[Either[WalletError, Unit]] = ???
+
+
+  def balance: F[BigDecimal] = for{
+    strB <- Sync[F].delay(Files.readString(Paths.get(id)))
+    res <- Sync[F].delay(BigDecimal(strB))
+  }yield(res)
+
+  def topup(amount: BigDecimal): F[Unit] = for{
+    strB <- Sync[F].delay(Files.readString(Paths.get(id)))
+    curr <- Sync[F].delay(BigDecimal(strB))
+    _ <- Sync[F].delay(Files.write(Paths.get(id), (curr + amount).toString().getBytes))
+  }yield()
+
+  def withdraw(amount: BigDecimal): F[Either[WalletError, Unit]] = for{
+    curr <- balance
+    res <- Sync[F].delay(
+      if(curr >= amount) {
+        Files.write(Paths.get(id), (curr - amount).toString().getBytes)
+        Either.right()
+      } else  Either.left(BalanceTooLow))
+  }yield(res)
+
 }
 
 object Wallet {
@@ -37,7 +59,13 @@ object Wallet {
   // Здесь нужно использовать обобщенную версию уже пройденного вами метода IO.delay,
   // вызывается она так: Sync[F].delay(...)
   // Тайпкласс Sync из cats-effect описывает возможность заворачивания сайд-эффектов
-  def fileWallet[F[_]: Sync](id: WalletId): F[Wallet[F]] = ???
+//  def fileWallet[F[_]: Sync](id: WalletId): F[Wallet[F]] = Sync[F].delay(IO.delay(Files.exists(Paths.get(id))))
+  def fileWallet[F[_]: Sync: Monad](id: WalletId): F[Wallet[F]] = Sync[F].delay(Files.exists(Paths.get(id)) match {
+    case true =>  new FileWallet[F](id)
+    case _ => Files.write(Paths.get(id), "0".getBytes)
+        new FileWallet[F](id)
+  })
+
 
   type WalletId = String
 
